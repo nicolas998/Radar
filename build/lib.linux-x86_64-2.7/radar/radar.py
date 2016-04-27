@@ -207,7 +207,7 @@ class radar_process:
 		    print "Binario defectuoso"
 		ref[ref==-999]=0.0
 		ref=np.flipud(ref)
-		ref[ref<5]=0
+		ref[ref<5]=0	
 		Z = 10.**(ref/10.)
 		Z[ref==-999]=-999
 		self.Z=Z; self.ref=ref
@@ -523,7 +523,7 @@ class draw_func:
 	#Hace un plot elegante de la imagen de radar	
 	def plot_radar_elegant(self,imageIn,ruta=None,figsize=(12,12),extra_lat=-0.2,
 		extra_long=-0.2,lines_spaces=0.4,mask_value=0.0,xy=None,
-		xyColor='red',**kwargs):
+		xyColor='red',colorbar=True, texto=None, **kwargs):
 		'\n'\
 		'Descripcion: Toma cualquier raster con valores del radar\n'\
 		'	y hace un plot de este de forma elegante\n'\
@@ -578,7 +578,8 @@ class draw_func:
 		#Genera el mapa
 		demX,demY=m(X,Y)
 		cs=m.contourf(demX, demY, imageIn, 100, **kwargs)
-		cbar = m.colorbar(cs,location='bottom',pad="5%")	
+		if colorbar:
+			cbar = m.colorbar(cs,location='bottom',pad="5%")	
 		#dibuja los circulos		
 		XY = []
 		for i in [30,60,90,120,250]:			
@@ -587,10 +588,12 @@ class draw_func:
 		#Si hay coordenadas de algo las dibuja
 		if xy<>None:
 			xc,yc=m(xy[0],xy[1])
-			m.scatter(xc,yc,color=xyColor,
-				s=30,
-				linewidth=0.5,
-				edgecolor='black')
+			m.plot(xc,yc,color=xyColor,
+				#s=30,
+				linewidth=1,)
+				#edgecolor='black')
+		if texto<>None:
+			pl.annotate(texto, xy=(0.1, 0.9), xycoords='axes fraction', size=16)
 		if ruta<>None:
 			pl.savefig(ruta,bbox_inches='tight')
 		pl.show()

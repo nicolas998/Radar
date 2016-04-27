@@ -16,15 +16,7 @@ setup(
     url='http://pypi.python.org/pypi/Radar/',
     license='LICENSE.txt',
     description='.',
-    long_description=open('README.md').read(),
-    install_requires=[
-		"numpy >= 1.6.1",
-		"osgeo >= 2.7.3",
-		"matplotlib >= 0.15",
-		"glob",
-		"mpl_toolkits.basemap",
-		"scipy",
-		"netCDF4","pickle"],
+    long_description=open('README.txt').read(),
     ext_modules=[ext1],
 	)
 
