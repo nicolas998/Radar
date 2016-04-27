@@ -9,7 +9,7 @@
       integer flag
       external f2pysetdata
       logical ns
-      integer r,i,j
+      integer r,i
       integer(8) s(*)
       ns = .FALSE.
       if (allocated(d)) then
@@ -39,7 +39,7 @@
       integer flag
       external f2pysetdata
       logical ns
-      integer r,i,j
+      integer r,i
       integer(8) s(*)
       ns = .FALSE.
       if (allocated(d)) then
@@ -70,7 +70,7 @@
       integer flag
       external f2pysetdata
       logical ns
-      integer r,i,j
+      integer r,i
       integer(8) s(*)
       ns = .FALSE.
       if (allocated(d)) then
