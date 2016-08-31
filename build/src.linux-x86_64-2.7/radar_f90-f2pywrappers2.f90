@@ -33,6 +33,37 @@
       flag = 1
       call f2pysetdata(d,allocated(d))
       end subroutine f2py_radar_f90_getdims_objectsnumtemp
+      subroutine f2py_radar_f90_getdims_matrizradios(r,s,f2pysetdata,fla&
+     &g)
+      use radar_f90, only: d => matrizradios
+
+      integer flag
+      external f2pysetdata
+      logical ns
+      integer r,i
+      integer(8) s(*)
+      ns = .FALSE.
+      if (allocated(d)) then
+         do i=1,r
+            if ((size(d,i).ne.s(i)).and.(s(i).ge.0)) then
+               ns = .TRUE.
+            end if
+         end do
+         if (ns) then
+            deallocate(d)
+         end if
+      end if
+      if ((.not.allocated(d)).and.(s(1).ge.1)) then
+       allocate(d(s(1),s(2)))
+      end if
+      if (allocated(d)) then
+         do i=1,r
+            s(i) = size(d,i)
+         end do
+      end if
+      flag = 1
+      call f2pysetdata(d,allocated(d))
+      end subroutine f2py_radar_f90_getdims_matrizradios
       subroutine f2py_radar_f90_getdims_lenghttemp(r,s,f2pysetdata,flag)
       use radar_f90, only: d => lenghttemp
 
@@ -141,6 +172,7 @@
       use radar_f90, only : objectsnumtemp
       use radar_f90, only : xll
       use radar_f90, only : ncols
+      use radar_f90, only : matrizradios
       use radar_f90, only : lenghttemp
       use radar_f90, only : dxp
       use radar_f90, only : nrows
@@ -160,6 +192,8 @@
       use radar_f90, only : arc_slope
       use radar_f90, only : var2mean
       use radar_f90, only : fractal3d
+      use radar_f90, only : steiner_genera_radios
+      use radar_f90, only : steiner_find_peaks
       interface 
       subroutine f2pywrap_radar_f90_fd (fdf2pywrap, fd, mat, k, a)
       real fd
@@ -200,15 +234,17 @@
       end interface
       external f2pysetupfunc
       external f2py_radar_f90_getdims_objectsnumtemp
+      external f2py_radar_f90_getdims_matrizradios
       external f2py_radar_f90_getdims_lenghttemp
       external f2py_radar_f90_getdims_objectstemp
       call f2pysetupfunc(f2py_radar_f90_getdims_objectsnumtemp,xll,ncols&
-     &,f2py_radar_f90_getdims_lenghttemp,dxp,nrows,f2py_radar_f90_getdim&
-     &s_objectstemp,dx,yll,nodata,detect_clouds,erosion,dilation,opening&
-     &,closing,classify_binary,cut_list_object,clean_by_size,objects_len&
-     &ght,arc_slope,var2mean,fractal3d,f2pywrap_radar_f90_fd,f2pywrap_ra&
-     &dar_f90_std,f2pywrap_radar_f90_slope,f2pywrap_radar_f90_cum_sum,f2&
-     &pywrap_radar_f90_qsortc,f2pywrap_radar_f90_partition)
+     &,f2py_radar_f90_getdims_matrizradios,f2py_radar_f90_getdims_lenght&
+     &temp,dxp,nrows,f2py_radar_f90_getdims_objectstemp,dx,yll,nodata,de&
+     &tect_clouds,erosion,dilation,opening,closing,classify_binary,cut_l&
+     &ist_object,clean_by_size,objects_lenght,arc_slope,var2mean,fractal&
+     &3d,f2pywrap_radar_f90_fd,f2pywrap_radar_f90_std,f2pywrap_radar_f90&
+     &_slope,f2pywrap_radar_f90_cum_sum,steiner_genera_radios,steiner_fi&
+     &nd_peaks,f2pywrap_radar_f90_qsortc,f2pywrap_radar_f90_partition)
       end subroutine f2pyinitradar_f90
 
 

@@ -12,12 +12,17 @@ integer ncols,nrows !cantidad de columnas y filas del mapa
 integer, allocatable :: ObjectsTemp(:,:) !Fila columna e id de los objetos que se encuentran en una imagen
 integer, allocatable :: ObjectsNumTemp(:,:) !Lista la cantidad de elementos de cada objeto encontrado
 real, allocatable :: LenghtTemp(:) !Array con las longitudes medidas
+real, allocatable :: MatrizRadios(:,:) !Matriz Con radios calculados (usado mucho en Steiner 1995)
 !funcion para hacer sort
 public :: QsortC
 
 !-----------------------------------------------------------------------
 !Punto de inicio de funciones del modulo
 contains
+
+!-----------------------------------------------------------------------
+!Subrutinas para operar con radares como si fueran imagenes
+!-----------------------------------------------------------------------
 
 subroutine detect_clouds(image,Grad,kerX,kerY,nc,nf) !detecta las nubes en un dem
 	!Variables de entrada
@@ -362,6 +367,10 @@ subroutine var2mean(imageIn,ObjectList,meanVar,stdVar,nc,nf,Nelem,Npixels)
 	enddo		
 end subroutine
 
+!-----------------------------------------------------------------------
+!Subrutinas Para calcular dimension fractal
+!-----------------------------------------------------------------------
+
 subroutine fractal3d(imageIn,ObjectList,ker,nc,nf,Npixels,a,Fractal)
 	!Variables de entrada
 	integer, intent(in) :: nc,nf,Npixels,ker,a
@@ -459,25 +468,6 @@ real function slope(x,y,n)
 	slope=(sum(x*y)-(sum(x)*sum(y))/n)/(sum(x**2)-((sum(x)**2)/n))	
 end function
 
-!subroutine Convective_Stratiform(Z,ref,nc,nf,conv) !encuentra por metodod e houze
-!	!Variables de entrada
-!	integer, intent(in) :: nc,nf
-!	real, intent(in) :: Z(nc,nf),ref(nc,nf)
-!	!Variables de salida
-!	integer, intent(out) :: conv(nc,nf)
-!	!f2py intent(in) :: nc,nf,Z,ref
-!	!f2py intent(out) :: conv
-!	!Variables locales 
-!	integer i,j
-!	!Inicia la variable donde clasifica
-!	conv=0
-!	!Encuentra primero por umbral, las mayores a 40
-!	where(ref .gt. 40) conv=1
-!	!
-	
-!end subroutine
-
-
 recursive function cum_sum(n) result(res)    
     integer res,n
     if (n .EQ. 0) then
@@ -486,6 +476,114 @@ recursive function cum_sum(n) result(res)
         res = n + cum_sum(n - 1)
     endif
 end
+
+
+!-----------------------------------------------------------------------
+!Subrutinas Para clasificar de acuerdo a Steiner 1995
+!-----------------------------------------------------------------------
+subroutine steiner_genera_radios(radio) !Genera una matriz de radios a partir de un radio dado
+	!Variables de entrada
+	real, intent(in) :: radio !Ingresa en metros
+	!Variables locales 
+	integer Tamano, i,j, TamMedio
+	!calcula el tamano de la matriz de radios 
+	Tamano = ceiling(radio / dxp)+7
+	TamMedio = ceiling(Tamano/2.0)
+	if (allocated(MatrizRadios)) deallocate(MatrizRadios)
+	allocate(MatrizRadios(Tamano,Tamano))
+	!Calcula los radios para la matriz 
+	MatrizRadios = noData
+	do i=1,Tamano
+		do j = 1,Tamano
+			MatrizRadios(i,j) = sqrt(dxp*(TamMedio-i)**2.0+dxp*(TamMedio-j)**2.0)
+		enddo
+	enddo
+	!mata los radios que superan el umbral 
+	where(MatrizRadios .gt. radio) MatrizRadios = noData
+end subroutine 
+
+real function steiner1995(MZbg)
+	!Variables de entrada
+	real MZbg
+	!Calcula
+	if (MZbg .lt. 0) then 
+		steiner1995 = 10
+	elseif (MZbg .ge. 0 .and. MZbg .lt. 42.43) then 
+		steiner1995 = 10 - (MZbg**2.0)/180.0
+	elseif (MZbg .gt. 42.43) then 
+		steiner1995 = 0
+	endif
+end function
+
+real function siriluk2008(MZbg, Zbg, tam)
+	!Variables de entrada
+	integer tam
+	real Zbg(tam,tam), MZbg
+	!Variables locales 
+	real Zc, P
+	!Calcula 
+	Zc = minval(Zbg, mask = Zbg .ne. noData)
+	P = max(((Zc+2.5)**2.0)/10.0, 140)
+	siriluk2008 = 10 - (MZbg**2)/P
+end function
+
+subroutine steiner_find_peaks(Ref, ncol, nfil, umbral, radio, metodo, peaks) !Esta funcion encuentra los picos para la clasificacion de conv y estratiforme de Steiner 1995
+	!Variables de entrada
+	integer, intent(in) :: ncol, nfil, metodo
+	real, intent(in) :: Ref(ncol,nfil)
+	real, intent(in) :: umbral, radio
+	!Variables de salida
+	integer, intent(out) :: peaks(ncol,nfil)
+	!Variables locales 
+	integer i,j
+	real, allocatable :: Zbg(:,:)
+	real, allocatable :: refLoc(:,:)
+	real SumZbg, CountZbg, MeanZbg, DiffZbg
+	!inicia los picos en cero 
+	peaks = 0
+	!Calcula cantidad de celdas e Inicia matriz de fondo para un radio de 11km
+	Tamano = ceiling(radio / dxp)+7
+	if (mod(Tamano,2) .eq. 0) Tamano = Tamano+1
+	TamMedio = floor(Tamano/2.0)
+	allocate(Zbg(Tamano,Tamano))
+	allocate(refLoc(ncol+Tamano, nfil+Tamano))
+	refLoc = nodata
+	refLoc(TamMedio:ncol, TamMedio:nfil) = ref
+	call steiner_genera_radios(radio)
+	! Itera por toda la matriz de reflectividad
+	do i=1,ncol
+		do j=1,nfil
+			!Evalua solo si tiene reflectividad y no es nulo 
+			if ((refLoc(i,j) .ne. noData ) .and. (refLoc(i,j) .gt. 0)) then 
+				!Evalua por criterio por Intensidad
+				if (refLoc(i,j) .gt. umbral) then
+					peaks(i,j) = 1
+					call steiner_convective_radius()					
+				!Si no encuentra picos por ese criterio busca por el criterio de peakness
+				else
+					!Calcula el Zbg Medio para el radio seleccionado y la diferencia con el punto central
+					Zbg = refLoc(i-TamMedio:i+TamMedio, j-TamMedio:j+TamMedio)
+					SumZbg = sum(Zbg, mask = MatrizRadios .ne. noData)
+					CountZbg = count(MatrizRadios .ne. noData)
+					MeanZbg = SumZbg / CountZbg
+					DiffZbg = refLoc(i,j) - MeanZbg
+					!Calcula el DifZcrit de acuerdo a la metodologia seleccionada
+					if (metodo .eq. 1) then
+						DiffZcrit = steiner1995(MeanZbg)
+					elseif (metodo .eq. 2) then 
+						DiffZcrit = siriluk2008(Zbg, Tamano)
+					endif
+					!Determina si el punto es o no por peakness
+					if (DiffZbg .gt. DiffZcrit) then 
+						peaks(i,j) = 2
+						call steiner_convective_radius()
+					endif
+				endif
+			endif
+		enddo
+	enddo
+	
+end subroutine
 
 !-----------------------------------------------------------------------
 !Funciones para hacer sort de algo
