@@ -13,6 +13,7 @@ integer, allocatable :: ObjectsTemp(:,:) !Fila columna e id de los objetos que s
 integer, allocatable :: ObjectsNumTemp(:,:) !Lista la cantidad de elementos de cada objeto encontrado
 real, allocatable :: LenghtTemp(:) !Array con las longitudes medidas
 real, allocatable :: MatrizRadios(:,:) !Matriz Con radios calculados (usado mucho en Steiner 1995)
+real, allocatable :: MatrizRadiosExpand(:,:) !
 !funcion para hacer sort
 public :: QsortC
 
@@ -502,63 +503,122 @@ subroutine steiner_genera_radios(radio) !Genera una matriz de radios a partir de
 	where(MatrizRadios .gt. radio) MatrizRadios = noData
 end subroutine 
 
-real function steiner1995(MZbg)
+
+subroutine steiner_genera_radios_expandir(radioExp, TamMedio2) !Genera una matriz de radios a partir de un radio dado
+	!Variables de entrada
+	real, intent(in) :: radioExp !Ingresa en metros
+	!Variables de retorno 
+	integer, intent(out) :: TamMedio2
+	!Variables locales 
+	integer i,j,Tamano
+	!calcula el tamano de la matriz de radios 
+	Tamano = ceiling(radioExp / dxp)+20
+	if (mod(Tamano,2) .eq. 0) Tamano = Tamano+1
+	TamMedio2 = floor(Tamano/2.0)
+	if (allocated(MatrizRadiosExpand)) deallocate(MatrizRadiosExpand)
+	allocate(MatrizRadiosExpand(Tamano,Tamano))
+	!Calcula los radios para la matriz 
+	MatrizRadiosExpand = noData
+	do i=1,Tamano
+		do j = 1,Tamano
+			MatrizRadiosExpand(i,j) = sqrt(dxp*(TamMedio2-i)**2.0+dxp*(TamMedio2-j)**2.0)
+		enddo
+	enddo
+	!mata los radios que superan el umbral 
+	where(MatrizRadiosExpand .gt. radioExp) MatrizRadiosExpand = noData
+end subroutine 
+
+real function steiner_steiner1995(MZbg)
 	!Variables de entrada
 	real MZbg
 	!Calcula
 	if (MZbg .lt. 0) then 
-		steiner1995 = 10
+		steiner_steiner1995 = 10
 	elseif (MZbg .ge. 0 .and. MZbg .lt. 42.43) then 
-		steiner1995 = 10 - (MZbg**2.0)/180.0
+		steiner_steiner1995 = 10 - (MZbg**2.0)/180.0
 	elseif (MZbg .gt. 42.43) then 
-		steiner1995 = 0
+		steiner_steiner1995 = 0
 	endif
 end function
 
-real function siriluk2008(MZbg, Zbg, tam)
+real function steiner_siriluk2008(MZbg, Zbg, Zc,tam)
 	!Variables de entrada
 	integer tam
-	real Zbg(tam,tam), MZbg
+	real Zbg(tam,tam), MZbg, Zc
 	!Variables locales 
-	real Zc, P
+	real P
 	!Calcula 
-	Zc = minval(Zbg, mask = Zbg .ne. noData)
-	P = max(((Zc+2.5)**2.0)/10.0, 140)
-	siriluk2008 = 10 - (MZbg**2)/P
+	P = max(((Zc+2.5)**2.0)/10.0, 140.0)
+	steiner_siriluk2008 = 10 - (MZbg**2.0)/P
 end function
 
-subroutine steiner_find_peaks(Ref, ncol, nfil, umbral, radio, metodo, peaks) !Esta funcion encuentra los picos para la clasificacion de conv y estratiforme de Steiner 1995
+real function steiner_yuter1996(MZbg, a, b)
+	!Variables de entrada
+	integer tam
+	real MZbg, a,b
+	!Calcula 
+	steiner_yuter1996 = a * cos((3.1416 * MZbg)/(2.0*b))
+end function
+
+subroutine steiner_radius(LocZbg, radConvLoc) !Determina el radio convectivo dependiendo de Z
+	!Variables de entrada
+	real, intent(in) :: LocZbg	
+	!Variables de salida
+	real, intent(out) :: radConvLoc
+	!Variables locales 
+	radConvLoc = -1.0
+	if (LocZbg .gt. 10.0 .and. LocZbg .le. 20.0) then 
+		radConvLoc = 1.0
+	elseif (LocZbg .gt. 20.0 .and. LocZbg .le. 25.0) then 
+		radConvLoc = 2.0
+	elseif (LocZbg .gt. 25.0 .and. LocZbg .le. 30.0) then 
+		radConvLoc = 3.0 
+	elseif (LocZbg .gt. 30.0 .and. LocZbg .le. 40.0) then 
+		radConvLoc = 4.0
+	elseif (LocZbg .gt. 40.0 .and. LocZbg .le. 50.0) then 
+		radConvLoc = 5.0
+	endif
+end subroutine
+
+
+
+subroutine steiner_find_peaks(Ref, ncol, nfil, umbral, radio, metodo, Zc, peaks,&
+	& a, b, clasificado) !Esta funcion encuentra los picos para la clasificacion de conv y estratiforme de Steiner 1995
 	!Variables de entrada
 	integer, intent(in) :: ncol, nfil, metodo
 	real, intent(in) :: Ref(ncol,nfil)
-	real, intent(in) :: umbral, radio
+	real, intent(in) :: umbral, radio, Zc, a, b
 	!Variables de salida
-	integer, intent(out) :: peaks(ncol,nfil)
+	integer, intent(out) :: peaks(ncol,nfil), clasificado(ncol,nfil)
 	!Variables locales 
-	integer i,j
+	integer i,j, Tamano, TamMedio, posX, posY, TMR
 	real, allocatable :: Zbg(:,:)
 	real, allocatable :: refLoc(:,:)
-	real SumZbg, CountZbg, MeanZbg, DiffZbg
+	real SumZbg, CountZbg, MeanZbg, DiffZbg, radioConv
 	!inicia los picos en cero 
 	peaks = 0
+	!Inicia clasificacion
+	clasificado = 0
+	where(ref .gt. 5.0) clasificado = 1
 	!Calcula cantidad de celdas e Inicia matriz de fondo para un radio de 11km
 	Tamano = ceiling(radio / dxp)+7
 	if (mod(Tamano,2) .eq. 0) Tamano = Tamano+1
 	TamMedio = floor(Tamano/2.0)
 	allocate(Zbg(Tamano,Tamano))
-	allocate(refLoc(ncol+Tamano, nfil+Tamano))
+	allocate(refLoc(ncol+Tamano-1, nfil+Tamano-1))
 	refLoc = nodata
 	refLoc(TamMedio:ncol, TamMedio:nfil) = ref
 	call steiner_genera_radios(radio)
 	! Itera por toda la matriz de reflectividad
-	do i=1,ncol
-		do j=1,nfil
+	do i=TamMedio,ncol
+		do j=TamMedio,nfil
 			!Evalua solo si tiene reflectividad y no es nulo 
 			if ((refLoc(i,j) .ne. noData ) .and. (refLoc(i,j) .gt. 0)) then 
+				posX = i-TamMedio+1
+				posY = j-TamMedio+1
 				!Evalua por criterio por Intensidad
 				if (refLoc(i,j) .gt. umbral) then
-					peaks(i,j) = 1
-					call steiner_convective_radius()					
+					peaks(posX,posY) = 1		
 				!Si no encuentra picos por ese criterio busca por el criterio de peakness
 				else
 					!Calcula el Zbg Medio para el radio seleccionado y la diferencia con el punto central
@@ -569,14 +629,25 @@ subroutine steiner_find_peaks(Ref, ncol, nfil, umbral, radio, metodo, peaks) !Es
 					DiffZbg = refLoc(i,j) - MeanZbg
 					!Calcula el DifZcrit de acuerdo a la metodologia seleccionada
 					if (metodo .eq. 1) then
-						DiffZcrit = steiner1995(MeanZbg)
+						DiffZcrit = steiner_steiner1995(MeanZbg)
 					elseif (metodo .eq. 2) then 
-						DiffZcrit = siriluk2008(Zbg, Tamano)
+						DiffZcrit = steiner_siriluk2008(MeanZbg, Zbg, Zc,Tamano)
+					elseif (metodo .eq. 3) then 
+						DiffZcrit = steiner_yuter1996(MeanZbg,a,b)
 					endif
 					!Determina si el punto es o no por peakness
-					if (DiffZbg .gt. DiffZcrit) then 
-						peaks(i,j) = 2
-						call steiner_convective_radius()
+					if (DiffZbg .gt. DiffZcrit .and. MeanZbg .gt. Zc) then 
+						peaks(posX,posY) = 1						
+					endif
+					
+				endif
+				!Expande 
+				if (peaks(posX,posY) .eq. 1) then
+					call steiner_radius(MeanZbg,radioConv)						
+					if (radioConv .gt. 0.0) then 
+						print *, radioConv
+						call steiner_genera_radios_expandir(radioConv,TMR)					
+						where(MatrizRadiosExpand .ne. noData) clasificado(posX-TMR:posX+TMR,posY-TMR:posY+TMR) = 2		
 					endif
 				endif
 			endif

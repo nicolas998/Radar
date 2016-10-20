@@ -86,7 +86,7 @@ class image_process:
 		'----------\n'\
 		'open=openning(binImage,5).\n'\
 		
-		return self.erosion(self.dilation(imageIn,kernel))
+		return self.erosion(self.dilation(binaria,kernel))
 	#cierra la imagen
 	def closing(self,imageIn,kernel=3):
 		'\n'\

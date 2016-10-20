@@ -203,15 +203,6 @@
       steiner_siriluk2008f2pywrap = steiner_siriluk2008(mzbg, zbg, zc, t&
      &am)
       end subroutine f2pywrap_radar_f90_steiner_siriluk2008
-      subroutine f2pywrap_radar_f90_steiner_yuter1996 (steiner_yuter1996&
-     &f2pywrap, mzbg, a, b)
-      use radar_f90, only : steiner_yuter1996
-      real mzbg
-      real a
-      real b
-      real steiner_yuter1996f2pywrap
-      steiner_yuter1996f2pywrap = steiner_yuter1996(mzbg, a, b)
-      end subroutine f2pywrap_radar_f90_steiner_yuter1996
       subroutine f2pywrap_radar_f90_qsortc (a, f2py_a_d0)
       use radar_f90, only : qsortc
       integer f2py_a_d0
@@ -298,14 +289,6 @@
       real zbg(tam,tam)
       real steiner_siriluk2008f2pywrap
       end subroutine f2pywrap_radar_f90_steiner_siriluk2008 
-      subroutine f2pywrap_radar_f90_steiner_yuter1996 (steiner_yuter1996&
-     &f2pywrap, steiner_yuter1996, mzbg, a, b)
-      real steiner_yuter1996
-      real mzbg
-      real a
-      real b
-      real steiner_yuter1996f2pywrap
-      end subroutine f2pywrap_radar_f90_steiner_yuter1996 
       subroutine f2pywrap_radar_f90_qsortc (a, f2py_a_d0)
       integer f2py_a_d0
       real a(f2py_a_d0)
@@ -331,9 +314,8 @@
      &,f2pywrap_radar_f90_std,f2pywrap_radar_f90_slope,f2pywrap_radar_f9&
      &0_cum_sum,steiner_genera_radios,steiner_genera_radios_expandir,f2p&
      &ywrap_radar_f90_steiner_steiner1995,f2pywrap_radar_f90_steiner_sir&
-     &iluk2008,f2pywrap_radar_f90_steiner_yuter1996,steiner_radius,stein&
-     &er_find_peaks,f2pywrap_radar_f90_qsortc,f2pywrap_radar_f90_partiti&
-     &on)
+     &iluk2008,steiner_radius,steiner_find_peaks,f2pywrap_radar_f90_qsor&
+     &tc,f2pywrap_radar_f90_partition)
       end subroutine f2pyinitradar_f90
 
 
