@@ -10,7 +10,6 @@ import pickle
 Path = __file__
 Path = Path[:-9]+'ajuste_multicapaall_77.pkl'
 RadProp = []
-print 'hola july'
 
 def __open_pklfiles__(path_pkldata):
     open_pkl = open(path_pkldata, 'rb')
@@ -490,37 +489,16 @@ class radar_process:
 		'\n'\
 		'Retornos\n'\
 		'----------\n'\
-		'self.classes : los objetos clasificados de la imagen.\n'\
+		'self.ConvStra : Imagen clasificada en Convectivos, Estratiformes.\n'\
 		'\n'\
 		'Ejemplo\n'\
 		'----------\n'\
 		'.\n'\
-		
-		
-		peaks,clasificado = steiner_find_peaks(ref,umbral,radio,metodo,zc,a,b,[ncol,nfil])
-
-Wrapper for ``steiner_find_peaks``.
-
-Parameters
-----------
-ref : input rank-2 array('f') with bounds (ncol,nfil)
-umbral : input float
-radio : input float
-metodo : input int
-zc : input float
-a : input float
-b : input float
-
-Other Parameters
-----------------
-ncol : input int, optional
-    Default: shape(ref,0)
-nfil : input int, optional
-    Default: shape(ref,1)
-	
-		
-		
-		
+		#Invoca la funcion de fortran 
+		peaks,self.ConvStra = radar_f90.steiner_find_peaks(self.ref,
+			umbral,radio,metodo,ZminSiriluk,a_yuter,b_yuter,
+			rad.ref.shape[0], rad.ref.shape[1])
+				
 	# Genera kernels circulares 
 	def CircKernel(self,radio):
 		#Centro del kernel y cantidad de datos
