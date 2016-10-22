@@ -494,10 +494,17 @@ class radar_process:
 		'Ejemplo\n'\
 		'----------\n'\
 		'.\n'\
+		#Parsea el metodo
+		if metodo == 'steiner':
+			metNum = 1
+		elif metodo == 'yuter':
+			metNum = 3
+		elif metodo == 'siriluk':
+			metNum = 2
 		#Invoca la funcion de fortran 
 		peaks,self.ConvStra = radar_f90.steiner_find_peaks(self.ref,
-			umbral,radio,metodo,ZminSiriluk,a_yuter,b_yuter,
-			self.ref.shape[0], self.ref.shape[1])
+			umbral,radio,metNum,ZminSiriluk,a_yuter,b_yuter,
+			int(self.ref.shape[0]), int(self.ref.shape[1]))
 				
 	# Genera kernels circulares 
 	def CircKernel(self,radio):
