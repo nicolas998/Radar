@@ -11,7 +11,6 @@ Path = __file__
 Path = Path[:-9]+'ajuste_multicapaall_77.pkl'
 RadProp = []
 
-print 'perro hp y pendejo '
 def __open_pklfiles__(path_pkldata):
     open_pkl = open(path_pkldata, 'rb')
     data = pickle.load(open_pkl)
