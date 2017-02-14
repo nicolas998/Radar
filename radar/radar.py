@@ -1,7 +1,11 @@
 from radar_f90 import *
 import numpy as np
 import glob
-from mpl_toolkits.basemap import Basemap, addcyclic, shiftgrid, cm
+try:
+	from mpl_toolkits.basemap import Basemap, addcyclic, shiftgrid, cm
+except:
+	print 'se desactivan funciones de ploteo con Basemap'
+	pass
 import pylab as pl
 import scipy.ndimage as nd
 from netCDF4 import Dataset  
