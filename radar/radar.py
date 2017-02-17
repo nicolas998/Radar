@@ -462,7 +462,7 @@ class radar_process:
 			self.elements.shape[1])
 		return meanvar,stdVar
 	#Clasifica convectivas y stratiformes
-	def Class2ConvStrat(self,umbral=None,kernel=3):
+	def Class2ConvStrat_deprecated(self,umbral=None,kernel=3):
 		strat=np.copy(self.fractal)
 		conv=np.copy(self.fractal)
 		strat[strat>0]=1; strat[np.isnan(strat)]=0
@@ -473,6 +473,43 @@ class radar_process:
 		conv=nd.binary_fill_holes(conv); conv=conv*2
 		self.StratConv=strat+conv
 		self.StratConv[self.StratConv>2]=2
+	#Clasifica convectivas y estratiformes por el metodo de steiner
+	def Class2ConvStratiform(self, umbral = 40, radio = 11, metodo = 'yuter',
+		ZminSiriluk = 15, a_yuter = 10, b_yuter = 50):
+		'\n'\
+		'Descripcion: Clasifica entre convectivo y estratiforme \n'\
+		'	de acuerdo a las metodologias de Steiner, Siriluk o Yuter\n'\
+		'	todas se basan en el mismo principio, sin embargo varian\n'\
+		'	algunos parametros.\n'\
+		'\n'\
+		'Parametros\n'\
+		'----------\n'\
+		'umbral : Cantidad minima de reflectividad para considerar picos.\n'\
+		'radio: Radio de busqueda de centros convectivos.\n'\
+		'metodo: Metodo de busqueda: yuter, siriluk o steiner.\n'\
+		'ZminSiriluk: Valor minimo de Zc del metodo de siriluk.\n'\
+		'a_yuter: Valor de a del metodo de yuter.\n'\
+		'b_yuter: Valor de b del metodo de yuter.\n'\
+		'\n'\
+		'Retornos\n'\
+		'----------\n'\
+		'self.ConvStra : Imagen clasificada en Convectivos, Estratiformes.\n'\
+		'\n'\
+		'Ejemplo\n'\
+		'----------\n'\
+		'.\n'\
+		#Parsea el metodo
+		if metodo == 'steiner':
+			metNum = 1
+		elif metodo == 'yuter':
+			metNum = 3
+		elif metodo == 'siriluk':
+			metNum = 2
+		#Invoca la funcion de fortran 
+		peaks,self.ConvStra = radar_f90.steiner_find_peaks(self.ref,
+			umbral,radio,metNum,ZminSiriluk,a_yuter,b_yuter,
+			int(self.ref.shape[0]), int(self.ref.shape[1]))
+				
 	# Genera kernels circulares 
 	def CircKernel(self,radio):
 		#Centro del kernel y cantidad de datos
@@ -519,6 +556,8 @@ class radar_process:
 		
 		## Obtiene las variables de la lluvia
 		self.ppt = c3_all
+	# 
+	
 	
 class draw_func:
 	def __init__(self):
