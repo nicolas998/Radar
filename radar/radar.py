@@ -547,17 +547,17 @@ class radar_process:
 		if trunc is not None:
 			c1_all[c1_all >= trunc] = trunc       
 		c2_all = ((10**(c1_all/10.0))/ajuste_multicapaall['capa2']['bc2'])**(1.0/(ajuste_multicapaall['capa2']['mc2']))
-		c3_all = (ajuste_multicapaall['capa3']['mc3']*c2_all + ajuste_multicapaall['capa3']['bc3'])
-		c3_all[c1_all <= 5.0] = 0.0
 		
-		mask_ajust = np.isnan(c3_all)
-		c3_all[mask_ajust == True] = 0 
-		c3_all[c3_all < 0] = 0
-		
-		## Obtiene las variables de la lluvia
-		self.ppt = c3_all
-	# 
-	
+		self.ppt = {}
+		for name, kmin, kmax in zip(['media','baja','alta'],['mc3','Emin_m','Emax_m'],['bc3','Emax_m','Emax_b']):
+			#Media		
+			c3_all = (ajuste_multicapaall['capa3'][kmin]*c2_all + ajuste_multicapaall['capa3'][kmax])
+			c3_all[c1_all <= 5.0] = 0.0
+			mask_ajust = np.isnan(c3_all)
+			c3_all[mask_ajust == True] = 0 
+			c3_all[c3_all < 0] = 0		
+			## Obtiene las variables de la lluvia
+			self.ppt.update({name:c3_all})
 	
 class draw_func:
 	def __init__(self):
