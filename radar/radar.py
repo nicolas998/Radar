@@ -509,6 +509,29 @@ class radar_process:
 		peaks,self.ConvStra = radar_f90.steiner_find_peaks(self.ref,
 			umbral,radio,metNum,ZminSiriluk,a_yuter,b_yuter,
 			int(self.ref.shape[0]), int(self.ref.shape[1]))
+	
+	def save_rain_class(self, ruta):
+		gr = Dataset(ruta,'w',format='NETCDF4')
+		#Diccionario de propiedades
+		Dict = {'ncols':RadProp[0],
+		    'nrows': RadProp[1],
+		    'xll': RadProp[2],
+		    'yll': RadProp[3],
+		    'dx': RadProp[4]}
+		#Establece tamano de las variables 
+		DimNcol = gr.createDimension('ncols',self.ConvStra.shape[0])
+		DimNfil = gr.createDimension('nrows',self.ConvStra.shape[1])
+		#Crea variables
+		ClasStruct = gr.createVariable('Conv_Strat','i4',('ncols','nrows'),zlib=True)
+		ClasRain = gr.createVariable('Rain', 'i4', ('ncols','nrows'),zlib=True)
+		#Asigna valores a las variables
+		ClasStruct[:] = self.ConvStra
+		ppt = np.copy(self.ppt) * 1000
+		ppt = ppt.astype(float)
+		ClasRain[:] = ppt
+		#Cierra el archivo 
+		gr.setncatts(Dict)
+		gr.close()
 				
 	# Genera kernels circulares 
 	def CircKernel(self,radio):
