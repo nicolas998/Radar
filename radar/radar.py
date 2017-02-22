@@ -524,11 +524,22 @@ class radar_process:
 		#Crea variables
 		ClasStruct = gr.createVariable('Conv_Strat','i4',('ncols','nrows'),zlib=True)
 		ClasRain = gr.createVariable('Rain', 'i4', ('ncols','nrows'),zlib=True)
+		ClasRainHigh = gr.createVariable('Rhigh', 'i4', ('ncols','nrows'),zlib=True)
+		ClasRainLow = gr.createVariable('Rlow', 'i4', ('ncols','nrows'),zlib=True)
 		#Asigna valores a las variables
 		ClasStruct[:] = self.ConvStra
-		ppt = np.copy(self.ppt) * 1000
+		#Lluvia normal
+		ppt = np.copy(self.ppt['media']) * 1000
 		ppt = ppt.astype(float)
 		ClasRain[:] = ppt
+		#Lluvia alta
+		ppt = np.copy(self.ppt['alta']) * 1000
+		ppt = ppt.astype(float)
+		ClasRainHigh[:] = ppt
+		#Lluvia baja
+		ppt = np.copy(self.ppt['baja']) * 1000
+		ppt = ppt.astype(float)
+		ClasRainLow[:] = ppt		
 		#Cierra el archivo 
 		gr.setncatts(Dict)
 		gr.close()
