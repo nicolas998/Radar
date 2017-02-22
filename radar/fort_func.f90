@@ -645,7 +645,7 @@ subroutine steiner_find_peaks(Ref, ncol, nfil, umbral, radio, metodo, Zc, peaks,
 				if (peaks(posX,posY) .eq. 1) then
 					call steiner_radius(MeanZbg,radioConv)						
 					if (radioConv .gt. 0.0) then 
-						print *, radioConv
+						!print *, radioConv
 						call steiner_genera_radios_expandir(radioConv,TMR)					
 						where(MatrizRadiosExpand .ne. noData) clasificado(posX-TMR:posX+TMR,posY-TMR:posY+TMR) = 2		
 					endif
