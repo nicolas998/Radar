@@ -509,6 +509,40 @@ class radar_process:
 		peaks,self.ConvStra = radar_f90.steiner_find_peaks(self.ref,
 			umbral,radio,metNum,ZminSiriluk,a_yuter,b_yuter,
 			int(self.ref.shape[0]), int(self.ref.shape[1]))
+	
+	def save_rain_class(self, ruta):
+		gr = Dataset(ruta,'w',format='NETCDF4')
+		#Diccionario de propiedades
+		Dict = {'ncols':RadProp[0],
+		    'nrows': RadProp[1],
+		    'xll': RadProp[2],
+		    'yll': RadProp[3],
+		    'dx': RadProp[4]}
+		#Establece tamano de las variables 
+		DimNcol = gr.createDimension('ncols',self.ConvStra.shape[0])
+		DimNfil = gr.createDimension('nrows',self.ConvStra.shape[1])
+		#Crea variables
+		ClasStruct = gr.createVariable('Conv_Strat','i4',('ncols','nrows'),zlib=True)
+		ClasRain = gr.createVariable('Rain', 'i4', ('ncols','nrows'),zlib=True)
+		ClasRainHigh = gr.createVariable('Rhigh', 'i4', ('ncols','nrows'),zlib=True)
+		ClasRainLow = gr.createVariable('Rlow', 'i4', ('ncols','nrows'),zlib=True)
+		#Asigna valores a las variables
+		ClasStruct[:] = self.ConvStra
+		#Lluvia normal
+		ppt = np.copy(self.ppt['media']) * 1000
+		ppt = ppt.astype(float)
+		ClasRain[:] = ppt
+		#Lluvia alta
+		ppt = np.copy(self.ppt['alta']) * 1000
+		ppt = ppt.astype(float)
+		ClasRainHigh[:] = ppt
+		#Lluvia baja
+		ppt = np.copy(self.ppt['baja']) * 1000
+		ppt = ppt.astype(float)
+		ClasRainLow[:] = ppt		
+		#Cierra el archivo 
+		gr.setncatts(Dict)
+		gr.close()
 				
 	# Genera kernels circulares 
 	def CircKernel(self,radio):
@@ -547,17 +581,17 @@ class radar_process:
 		if trunc is not None:
 			c1_all[c1_all >= trunc] = trunc       
 		c2_all = ((10**(c1_all/10.0))/ajuste_multicapaall['capa2']['bc2'])**(1.0/(ajuste_multicapaall['capa2']['mc2']))
-		c3_all = (ajuste_multicapaall['capa3']['mc3']*c2_all + ajuste_multicapaall['capa3']['bc3'])
-		c3_all[c1_all <= 5.0] = 0.0
 		
-		mask_ajust = np.isnan(c3_all)
-		c3_all[mask_ajust == True] = 0 
-		c3_all[c3_all < 0] = 0
-		
-		## Obtiene las variables de la lluvia
-		self.ppt = c3_all
-	# 
-	
+		self.ppt = {}
+		for name, kmin, kmax in zip(['media','baja','alta'],['mc3','Emin_m','Emax_m'],['bc3','Emax_m','Emax_b']):
+			#Media		
+			c3_all = (ajuste_multicapaall['capa3'][kmin]*c2_all + ajuste_multicapaall['capa3'][kmax])
+			c3_all[c1_all <= 5.0] = 0.0
+			mask_ajust = np.isnan(c3_all)
+			c3_all[mask_ajust == True] = 0 
+			c3_all[c3_all < 0] = 0		
+			## Obtiene las variables de la lluvia
+			self.ppt.update({name:c3_all})
 	
 class draw_func:
 	def __init__(self):
