@@ -211,7 +211,7 @@ class radar_process:
 		    print "Binario defectuoso"
 		ref[ref==-999]=0.0
 		ref=np.flipud(ref)
-		ref[ref<5]=0	
+		ref[ref<5]=0
 		Z = 10.**(ref/10.)
 		Z[ref==-999]=-999
 		self.Z=Z; self.ref=ref
@@ -654,7 +654,8 @@ class draw_func:
 			imageIn=np.ma.array(imageIn,mask=imageIn==mask_value)
 		#Genera el mapa
 		demX,demY=m(X,Y)
-		cs=m.contourf(demX, demY, imageIn, 100, **kwargs)
+		#cs=m.contourf(demX, demY, imageIn, 100, **kwargs)
+		cs = m.pcolormesh(demX,demY, imageIn, **kwargs)
 		if colorbar:
 			cbar = m.colorbar(cs,location='bottom',pad="5%")	
 		#dibuja los circulos		

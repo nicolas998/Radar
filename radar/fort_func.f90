@@ -384,11 +384,13 @@ subroutine fractal3d(imageIn,ObjectList,ker,nc,nf,Npixels,a,Fractal)
 	!Variables locales 
 	integer i,j,ncn,nfn,halfKer,col,fil
 	real MatTemp(nc+ker-1,nf+ker-1)
-	real MatKernel(ker,ker)
+	real MatKernel(ker,ker), sigma
 	!Copia la imagen de reflectividad en la temporal 
 	ncn=nc+ker-1; nfn=nf+ker-1
 	halfKer=ker/2
 	MatTemp(halfKer+1:ncn-halfKer+1,halfKer+1:nfn-halfKer+1)=imageIn(:,:)
+	!Calcula la desviacion
+	sigma = std(MatTemp, nc+ker-1)
 	!Itera sobre los pixeles de las nubes encontradas
 	Fractal=0.0
 	do i=1,Npixels
@@ -396,38 +398,35 @@ subroutine fractal3d(imageIn,ObjectList,ker,nc,nf,Npixels,a,Fractal)
 		col=ObjectList(2,i)+halfKer
 		fil=ObjectList(3,i)+halfKer
 		MatKernel=MatTemp(col-halfKer:col+halfKer-1,fil-halfKer:fil+halfKer-1)
-		Fractal(ObjectList(2,i),ObjectList(3,i))=fd(MatKernel,ker,a)
+		Fractal(ObjectList(2,i),ObjectList(3,i))=fd(MatKernel,ker,a, sigma)
 	enddo
 end subroutine 
 
-real function fd(Mat,k,a)
+real function fd(Mat,k,a,s)
 	!Defincion de variables
 	integer k,a
-	real Mat(k,k)
+	real Mat(k,k),s
 	!Variables locales 
 	real NpFin(k), SFin(k)	
-	real rp
+	real rp, sigma
 	integer cont,nr,np,z,j
 	!Encuentra la cantidad de multiplos del kernel 	y los multiplos
 	cont=0
 	do i=1,k
 		if (mod(k,i).eq.0) then 
 			!contabiliza los que son multiplos
-			cont=cont+1			
+			cont=cont+1
 			!Obtiene el tamano vertical de las celdas 
-			rp=i/(1+2*a*std(Mat,k)) 
+			rp=i/(1.+2.*a*s) 
 			!Obtiene la cantidad de celdas verticales 
-			if (maxval(Mat) .eq. minval(Mat)) then 
-				nr=1.0
-			else
-				nr=ceiling((maxval(Mat)-minval(Mat))/rp)
-			endif
-			!Itera la ventana multiplo para obtener la cantidad 
-			!de cuadros cubiertos por esta 			
 			np=0
 			do j=1,k,i
 				do z=1,k,i
-					np=np+ceiling((maxval(Mat(j:j+i-1,z:z+i-1))-minval(Mat(:,:)))/rp+1)
+					if (maxval(Mat(j:j+i-1, z:z+i-1)) .gt. minval(Mat(:,:))) then
+						np = np + ceiling((maxval(Mat(j:j+i-1,z:z+i-1)) -minval(Mat(:,:)))/rp)
+					else
+						np = np + 1
+					endif
 				enddo
 			enddo
 			!guarda la cantidad de cuadritos almacenados para esa dimension
@@ -439,7 +438,7 @@ real function fd(Mat,k,a)
 	NpFin(1:cont)=log(NpFin(1:cont))
 	SFin(1:cont)=log(SFin(1:cont))
 	fd=-1*slope(SFin(1:cont),NpFin(1:cont),cont)
-	if (fd .lt. 2.0) fd=2.0	
+	if (fd .lt. 2.0) fd=2.0
 end function
 
 real function std(Mat,k)
@@ -466,7 +465,8 @@ real function slope(x,y,n)
 	integer n
 	real x(n),y(n)	
 	!calcula 
-	slope=(sum(x*y)-(sum(x)*sum(y))/n)/(sum(x**2)-((sum(x)**2)/n))	
+	!slope=(sum(x*y)-(sum(x)*sum(y))/n)/(sum(x**2)-((sum(x)**2)/n))	
+	slope = ( n * (sum(x*y)) - sum(x)*sum(y) ) / ( n*(sum(x**2)) - sum(x)**2 )
 end function
 
 recursive function cum_sum(n) result(res)    
