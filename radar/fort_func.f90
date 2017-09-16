@@ -412,7 +412,7 @@ real function fd(Mat,k,a,s)
 	integer cont,nr,np,z,j
 	!Encuentra la cantidad de multiplos del kernel 	y los multiplos
 	cont=0
-	do i=1,k
+	do i=3,k
 		if (mod(k,i).eq.0) then 
 			!contabiliza los que son multiplos
 			cont=cont+1
@@ -423,7 +423,7 @@ real function fd(Mat,k,a,s)
 			do j=1,k,i
 				do z=1,k,i
 					if (maxval(Mat(j:j+i-1, z:z+i-1)) .gt. minval(Mat(:,:))) then
-						np = np + ceiling((maxval(Mat(j:j+i-1,z:z+i-1)) -minval(Mat(:,:)))/rp)
+						np = np + ceiling((maxval(Mat(j:j+i-1,z:z+i-1)) - minval(Mat(:,:)))/rp)
 					else
 						np = np + 1
 					endif
