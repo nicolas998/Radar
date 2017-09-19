@@ -372,11 +372,11 @@ end subroutine
 !Subrutinas Para calcular dimension fractal
 !-----------------------------------------------------------------------
 
-subroutine fractal3d(imageIn,ObjectList,ker,nc,nf,Npixels,a,Fractal)
+subroutine fractal3d(imageIn,ObjectList,ker,nc,nf,Npixels,sigma, a,Fractal)
 	!Variables de entrada
 	integer, intent(in) :: nc,nf,Npixels,ker,a
 	integer, intent(in) :: ObjectList(3,Npixels)
-	real, intent(in) :: imageIn(nc,nf)
+	real, intent(in) :: imageIn(nc,nf), sigma
 	!Variables de salida 
 	real, intent(out) :: Fractal(nc,nf)
 	!f2py intent(in) :: nc,nf,Npixels, ObjectList, imageIn,a
@@ -384,13 +384,13 @@ subroutine fractal3d(imageIn,ObjectList,ker,nc,nf,Npixels,a,Fractal)
 	!Variables locales 
 	integer i,j,ncn,nfn,halfKer,col,fil
 	real MatTemp(nc+ker-1,nf+ker-1)
-	real MatKernel(ker,ker), sigma
+	real MatKernel(ker,ker)
 	!Copia la imagen de reflectividad en la temporal 
 	ncn=nc+ker-1; nfn=nf+ker-1
 	halfKer=ker/2
 	MatTemp(halfKer+1:ncn-halfKer+1,halfKer+1:nfn-halfKer+1)=imageIn(:,:)
 	!Calcula la desviacion
-	sigma = std(MatTemp, nc+ker-1)
+	!sigma = std(MatTemp, nc+ker-1)
 	!Itera sobre los pixeles de las nubes encontradas
 	Fractal=0.0
 	do i=1,Npixels

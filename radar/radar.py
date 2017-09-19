@@ -172,12 +172,13 @@ class radar_process:
 			setattr(radar_f90, key, value)
 		
 		#Copia las propiedades en la lista de propiedades variable
-		RadProp.extend([radar_f90.ncols,
-			radar_f90.nrows,
-			radar_f90.xll,
-			radar_f90.yll,
-			radar_f90.dx,
-			radar_f90.nodata])
+		if len(RadProp) == 0:
+			RadProp.extend([radar_f90.ncols,
+				radar_f90.nrows,
+				radar_f90.xll,
+				radar_f90.yll,
+				radar_f90.dx,
+				radar_f90.nodata])
 		
 	#lee Z y ref
 	def read_bin(self,path):	
@@ -391,7 +392,7 @@ class radar_process:
 		else:
 			print 'Error: radar.dxp=0.0'
 	#Dimension fractal superficie
-	def Fractal_Dimension_Surface(self,k=12,a=1):
+	def Fractal_Dimension_Surface(self,imageIn,ObjectList,sigma=0.0,k=12,a=1):
 		'\n'\
 		'Descripcion: Determina la dimension fractal superficial\n'\
 		'	de los objetos\n'\
@@ -402,6 +403,7 @@ class radar_process:
 		'ObjectList : Lista de pixeles que componen los objetos a analizar.\n'\
 		'k : Tamano del kernel con el que se va a realizar el calculo.\n'\
 		'a : Factor de incremento de la desviacion en el metodo de conteo.\n'\
+		'sigma: Dispersion de los datos en el mapa a analizar, si =0, se calcula como p90-p10.\n'\
 		'\n'\
 		'Retornos\n'\
 		'----------\n'\
@@ -410,8 +412,13 @@ class radar_process:
 		'Ejemplo\n'\
 		'----------\n'\
 		'FD=Fractal_Dimension_Surface(Z,elem,k=10,a=2).\n'\
-		
-		self.fractal = radar_f90.fractal3d(self.Z,self.elements,k,a,
+		#Calcula la desciavion por defecto como el rango entre p90 y p10
+		if sigma == 0.0:
+			p10 = np.percentile(imageIn[ObjectList[1], ObjectList[2]], 10)
+			p90 = np.percentile(imageIn[ObjectList[1], ObjectList[2]], 90)
+			sigma = p90 - p10
+		#Calcula el fractal en la superficie
+		self.fractal = radar_f90.fractal3d(imageIn,ObjectList,k,sigma, a,
 			radar_f90.ncols,
 			radar_f90.nrows,
 			self.elements.shape[1])		
