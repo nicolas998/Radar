@@ -517,14 +517,14 @@ class radar_process:
 			umbral,radio,metNum,ZminSiriluk,a_yuter,b_yuter,
 			int(self.ref.shape[0]), int(self.ref.shape[1]))
 	
-	def save_rain_class(self, ruta):
+	def save_rain_class(self, ruta, ExtraVar = None):
 		gr = Dataset(ruta,'w',format='NETCDF4')
 		#Diccionario de propiedades
 		Dict = {'ncols':RadProp[0],
-		    'nrows': RadProp[1],
-		    'xll': RadProp[2],
-		    'yll': RadProp[3],
-		    'dx': RadProp[4]}
+                    'nrows': RadProp[1],
+                    'xll': RadProp[2],
+                    'yll': RadProp[3],
+                    'dx': RadProp[4]}
 		#Establece tamano de las variables 
 		DimNcol = gr.createDimension('ncols',self.ConvStra.shape[0])
 		DimNfil = gr.createDimension('nrows',self.ConvStra.shape[1])
@@ -542,12 +542,17 @@ class radar_process:
 		#Lluvia alta
 		ppt = np.copy(self.ppt['alta']) * 1000
 		ppt = ppt.astype(float)
-		ClasRainHigh[:] = ppt
+                ClasRainHigh[:] = ppt
 		#Lluvia baja
 		ppt = np.copy(self.ppt['baja']) * 1000
 		ppt = ppt.astype(float)
-		ClasRainLow[:] = ppt		
-		#Cierra el archivo 
+                ClasRainLow[:] = ppt
+		#Extra veriables 
+                if type(ExtraVar) is dict:
+                    for k in ExtraVar.keys():
+                        Var = gr.createVariable(k,ExtraVar[k]['type'],('ncols','nrows'),zlib=True)
+			Var[:] = ExtraVar[k]['Data']
+                #Cierra el archivo 
 		gr.setncatts(Dict)
 		gr.close()
 				
