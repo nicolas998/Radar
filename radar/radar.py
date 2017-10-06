@@ -517,17 +517,39 @@ class radar_process:
 			umbral,radio,metNum,ZminSiriluk,a_yuter,b_yuter,
 			int(self.ref.shape[0]), int(self.ref.shape[1]))
 	
-	def save_rain_class(self, ruta, ExtraVar = None):
+	def save_rain_class(self, ruta, ExtraVar = None, ArrayVar1 = None, 
+                    ArrayVar2=None):
 		gr = Dataset(ruta,'w',format='NETCDF4')
-		#Diccionario de propiedades
+		'Descripcion: Guarda datos de radar procesados\n'\
+		'\n'\
+		'Parametros\n'\
+		'----------\n'\
+		'ruta : Ruta donde la cuenca sera guardada.\n'\
+		'ExtraVar: Variables extras de simulacion deben ir en un diccionario.\n'\
+		'	Forma del diccionario Dict = {"varName": {"Data": vector[ncells], "type": "tipo"}}.\n'\
+                'ArrayVar 1 y 2: Variables array en una dim para ser guadadas.\n'\
+                '       Forma: DicArray = {"varName": {"Data":vector, "type":"tipo"}}.\n'\
+                '	Los tipos de variables son: flotante: "f4", entero "i4".\n'\
+		'\n'\
+		'Retornos\n'\
+		'----------\n'\
+		'self : Con las variables iniciadas.\n'\
+                #Diccionario de propiedades
 		Dict = {'ncols':RadProp[0],
                     'nrows': RadProp[1],
                     'xll': RadProp[2],
                     'yll': RadProp[3],
                     'dx': RadProp[4]}
-		#Establece tamano de las variables 
+                #Establece tamano de las variables 
 		DimNcol = gr.createDimension('ncols',self.ConvStra.shape[0])
 		DimNfil = gr.createDimension('nrows',self.ConvStra.shape[1])
+                #variables del arrayVar
+                if type(ArrayVar1) is dict:
+                    k = ArrayVar1.keys()[0]
+                    DimArray = gr.createDimension('narray1',ArrayVar1[k]['Data'].size)
+                if type(ArrayVar2) is dict:
+                    k = ArrayVar2.keys()[0]
+                    DimArray = gr.createDimension('narray2',ArrayVar2[k]['Data'].size)
 		#Crea variables
 		ClasStruct = gr.createVariable('Conv_Strat','i4',('ncols','nrows'),zlib=True)
 		ClasRain = gr.createVariable('Rain', 'i4', ('ncols','nrows'),zlib=True)
@@ -552,6 +574,15 @@ class radar_process:
                     for k in ExtraVar.keys():
                         Var = gr.createVariable(k,ExtraVar[k]['type'],('ncols','nrows'),zlib=True)
 			Var[:] = ExtraVar[k]['Data']
+                #ArrayVar
+                if type(ArrayVar1) is dict:
+                    for k in ArrayVar1.keys():
+                        var = gr.createVariable(k,ArrayVar1[k]['type'],('narray1',),zlib=True)
+                        var[:] = ArrayVar1[k]['Data'] 
+                if type(ArrayVar2) is dict:
+                    for k in ArrayVar2.keys():
+                        var = gr.createVariable(k,ArrayVar2[k]['type'],('narray2',),zlib=True)
+                        var[:] = ArrayVar2[k]['Data']
                 #Cierra el archivo 
 		gr.setncatts(Dict)
 		gr.close()
