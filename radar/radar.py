@@ -4,7 +4,7 @@ import glob
 try:
 	from mpl_toolkits.basemap import Basemap, addcyclic, shiftgrid, cm
 except:
-	print 'se desactivan funciones de ploteo con Basemap'
+	print('se desactivan funciones de ploteo con Basemap')
 	pass
 import pylab as pl
 import scipy.ndimage as nd
@@ -209,7 +209,7 @@ class radar_process:
 		try:
 		    ref = np.reshape(reflectividad,(1728,1728))
 		except BaseException:
-		    print "Binario defectuoso"
+		    print("Binario defectuoso")
 		ref[ref==-999]=0.0
 		ref=np.flipud(ref)
 		ref[ref<5]=0
@@ -387,10 +387,10 @@ class radar_process:
 		'----------\n'\
 		'FD_plana=Fractal_Dimension_Plain(tam).\n'\
 				
-		if radar_f90.dxp<>0.0:
+		if radar_f90.dxp != 0.0:
 			return np.log(self.cant_elem)/np.log(radar_f90.dxp)
 		else:
-			print 'Error: radar.dxp=0.0'
+			print('Error: radar.dxp=0.0')
 	#Dimension fractal superficie
 	def Fractal_Dimension_Surface(self,imageIn,ObjectList,sigma=0.0,k=12,a=1):
 		'\n'\
@@ -474,7 +474,7 @@ class radar_process:
 		conv=np.copy(self.fractal)
 		strat[strat>0]=1; strat[np.isnan(strat)]=0
 		conv[np.isfinite(conv)]=0; conv[np.isnan(conv)]=1
-		if umbral<>None:
+		if umbral!=None:
 			conv[self.ref>umbral]=1
 		#conv=self.image.dilation(conv,kernel=kernel)
 		conv=nd.binary_fill_holes(conv); conv=conv*2
@@ -669,7 +669,7 @@ class draw_func:
 		X,Y=np.meshgrid(longs,lats)
 		Y=Y[::-1]
 		#Cambia el tamano de la figura si tiene que hacerlo
-		if figsize<>None:
+		if figsize!=None:
 			fig=pl.figure(figsize=figsize)		
 		#Genera el lugar de ploteo con el Basemap
 		m = Basemap(projection='merc',
@@ -693,7 +693,7 @@ class draw_func:
 			yoffset=0.1,
 			linewidth=0.1)
 		#Cambia zeros por nana
-		if mask_value<>None:
+		if mask_value != None:
 			imageIn=np.ma.array(imageIn,mask=imageIn==mask_value)
 		#Genera el mapa
 		demX,demY=m(X,Y)
@@ -707,13 +707,13 @@ class draw_func:
 			x,y = self.draw_circle(m,-75.5276,6.1937,i,c='k',lw=0.5)
 			XY.append([x,y])
 		#Si hay coordenadas de algo las dibuja
-		if xy<>None:
+		if xy!=None:
 			xc,yc=m(xy[0],xy[1])
 			m.plot(xc,yc,color=xyColor,
 				#s=30,
 				linewidth=1,)
 				#edgecolor='black')
-		if texto<>None:
+		if texto!=None:
 			pl.annotate(texto, xy=(0.1, 0.9), xycoords='axes fraction', size=16)
 		if ruta<>None:
 			pl.savefig(ruta,bbox_inches='tight')
