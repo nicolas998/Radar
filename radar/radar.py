@@ -12,7 +12,7 @@ from netCDF4 import Dataset
 import pickle
 
 Path = __file__
-Path = Path[:-9]+'ajuste_multicapaall_77.pkl'
+Path = Path[:-8]+'ajuste_multicapaall_77.pkl'
 RadProp = []
 
 def __open_pklfiles__(path_pkldata):
