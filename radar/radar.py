@@ -168,7 +168,7 @@ class radar_process:
 		radar_f90.nrows=1728
 		
 		#si se pasan argumentos se cambia
-		for key, value in kwargs.iteritems():      # styles is a regular dictionary
+		for key, value in iter(kwargs.items()):#kwargs.iteritems():      # styles is a regular dictionary
 			setattr(radar_f90, key, value)
 		
 		#Copia las propiedades en la lista de propiedades variable
@@ -218,7 +218,7 @@ class radar_process:
 		self.Z=Z; self.ref=ref
 	def read_netcdf(self,path):
 		fid=Dataset(path,'r')		
-		ref=fid.variables['DBZ_H'][0][0]
+		ref=fid.variables['Reflectivity'][0]
 		ref[ref<5]=0
 		Z = 10.**(ref/10.)
 		Z[ref==-999]=-999
